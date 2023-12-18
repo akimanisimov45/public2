@@ -1,0 +1,91 @@
+﻿using System;
+using System.IO;
+using System.Linq;
+
+public class FileMonitorEventArgs : EventArgs
+{
+    public string FilePath { get; }
+    public DateTime Timestamp { get; }
+    public long FileSize { get; }
+
+    public FileMonitorEventArgs(string filePath, DateTime timestamp, long fileSize)
+    {
+        FilePath = filePath;
+        Timestamp = timestamp;
+        FileSize = fileSize;
+    }
+}
+
+public delegate void FileMonitorDelegate(object sender, FileMonitorEventArgs e);
+
+public class FileMonitor
+{
+    private FileSystemWatcher fileSystemWatcher;
+
+    public event FileMonitorDelegate OnFileCreated;
+    public event FileMonitorDelegate OnFileDeleted;
+    public event FileMonitorDelegate OnFileModified;
+    public event FileMonitorDelegate OnFileRenamed;
+
+    private long maxFileSize = 1024 * 1024;
+    private string[] allowedExtensions = { ".txt", ".docx", ".pdf" }; 
+
+    public FileMonitor(string directoryPath)
+    {
+        fileSystemWatcher = new FileSystemWatcher();
+        fileSystemWatcher.Path = directoryPath;
+
+        fileSystemWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
+
+        fileSystemWatcher.Created += (sender, e) => NotifySubscribers(OnFileCreated, e.FullPath, e.ChangeType);
+        fileSystemWatcher.Deleted += (sender, e) => NotifySubscribers(OnFileDeleted, e.FullPath, e.ChangeType);
+        fileSystemWatcher.Changed += (sender, e) => NotifySubscribers(OnFileModified, e.FullPath, e.ChangeType);
+        fileSystemWatcher.Renamed += (sender, e) => NotifySubscribers(OnFileRenamed, e.FullPath, e.ChangeType);
+
+        fileSystemWatcher.EnableRaisingEvents = true;
+    }
+
+    private void NotifySubscribers(FileMonitorDelegate eventDelegate, string filePath, WatcherChangeTypes changeType)
+    {
+        DateTime timestamp = DateTime.Now;
+        FileInfo fileInfo = new FileInfo(filePath);
+
+        if (ShouldNotify(filePath, fileInfo))
+        {
+            FileMonitorEventArgs args = new FileMonitorEventArgs(filePath, timestamp, fileInfo.Length);
+            eventDelegate?.Invoke(this, args);
+        }
+    }
+
+    private bool ShouldNotify(string filePath, FileInfo fileInfo)
+    {
+        // Логіка фільтрації: включено файли з розширенням зі списку допустимих
+        return allowedExtensions.Contains(Path.GetExtension(filePath).ToLower()) &&
+               fileInfo.Length <= maxFileSize;
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        string directoryPath = @"C:\FileMonitorDelegate";
+        FileMonitor fileMonitor = new FileMonitor(directoryPath);
+
+        fileMonitor.OnFileCreated += (sender, e) =>
+            Console.WriteLine($"[{e.Timestamp}] Створено файл: {e.FilePath}, Розмір: {e.FileSize} байт");
+
+        fileMonitor.OnFileDeleted += (sender, e) =>
+            Console.WriteLine($"[{e.Timestamp}] Видалено файл: {e.FilePath}, Розмір: {e.FileSize} байт");
+
+        fileMonitor.OnFileModified += (sender, e) =>
+            Console.WriteLine($"[{e.Timestamp}] Модифіковано файл: {e.FilePath}, Розмір: {e.FileSize} байт");
+
+        fileMonitor.OnFileRenamed += (sender, e) =>
+            Console.WriteLine($"[{e.Timestamp}] Перейменовано файл: {e.FilePath}, Розмір: {e.FileSize} байт");
+
+        Console.WriteLine($"Система працює. Виконуйте файлові операції у каталозі {directoryPath}.");
+
+        Console.ReadLine();
+    }
+}

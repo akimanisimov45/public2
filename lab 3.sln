@@ -1,25 +1,87 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.33627.172
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lab 3", "lab 3.csproj", "{2DE1F7C8-5B1D-4292-A6A0-5FD5D75140AC}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2DE1F7C8-5B1D-4292-A6A0-5FD5D75140AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2DE1F7C8-5B1D-4292-A6A0-5FD5D75140AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2DE1F7C8-5B1D-4292-A6A0-5FD5D75140AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2DE1F7C8-5B1D-4292-A6A0-5FD5D75140AC}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {3502D09B-29FC-40D2-A186-8591426FA20C}
-	EndGlobalSection
-EndGlobal
+using System;
+
+public class Operation
+{
+    public static double Add(double a, double b)
+    {
+        return a + b;
+    }
+
+    public static double Subtract(double a, double b)
+    {
+        return a - b;
+    }
+
+    public static double Multiply(double a, double b)
+    {
+        return a * b;
+    }
+
+    public static double Divide(double a, double b)
+    {
+        if (b != 0)
+        {
+            return a / b;
+        }
+        else
+        {
+            Console.WriteLine("Помилка: ділення на 0!");
+            return double.NaN;
+        }
+    }
+}
+
+public class Calculator
+{
+    public double PerformOperation(double operand1, double operand2, Func<double, double, double> operation)
+    {
+        return operation(operand1, operand2);
+    }
+}
+
+class MainProgram
+{
+    static void Main()
+    {
+        Console.Write("Введіть перше число: ");
+        double num1 = Convert.ToDouble(Console.ReadLine());
+
+        Console.Write("Введіть друге число: ");
+        double num2 = Convert.ToDouble(Console.ReadLine());
+
+        Console.WriteLine("Оберіть операцію, яку хочете виконати над числами:");
+        Console.WriteLine("1 - Додавання");
+        Console.WriteLine("2 - Віднімання");
+        Console.WriteLine("3 - Множення");
+        Console.WriteLine("4 - Ділення");
+
+        Console.Write("Введіть номер операції: ");
+        int operationChoice = Convert.ToInt32(Console.ReadLine());
+
+        Calculator calculator = new Calculator();
+
+        double result = 0;
+
+        switch (operationChoice)
+        {
+            case 1:
+                result = calculator.PerformOperation(num1, num2, Operation.Add);
+                break;
+            case 2:
+                result = calculator.PerformOperation(num1, num2, Operation.Subtract);
+                break;
+            case 3:
+                result = calculator.PerformOperation(num1, num2, Operation.Multiply);
+                break;
+            case 4:
+                result = calculator.PerformOperation(num1, num2, Operation.Divide);
+                break;
+            default:
+                Console.WriteLine("Неправильне обрання операції.");
+                break;
+        }
+
+        Console.WriteLine($"Результат: {result}");
+        Console.ReadKey();
+    }
+}
